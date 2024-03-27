@@ -1,5 +1,5 @@
-require("dotenv").config();
 const { Sequelize } = require("sequelize");
+require("dotenv").config();
 const logger = require("../services/logger");
 
 const POSTGRESQL_DB = process.env.POSTGRESQL_DB;

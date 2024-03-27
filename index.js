@@ -10,40 +10,51 @@ const mailgun = require("mailgun-js")({ apiKey: apiKey, domain: domain });
 
 // Register a CloudEvent callback with the Functions Framework that will
 // be executed when the Pub/Sub trigger topic receives a message.
-functions.cloudEvent("verifyEmailPubsub", (cloudEvent) => {
+functions.cloudEvent("verifyEmailPubsub", async (cloudEvent) => {
   // The Pub/Sub message is passed as the CloudEvent's data payload.
-  const userID = cloudEvent.data.message.data;
+  const username = Buffer.from(cloudEvent.data.message.data, "base64")
+    .toString("utf-8")
+    .replaceAll('"', "");
+  logger.info({
+    message: "Received message",
+    username: username,
+    api: "verifyEmailPubsub",
+  });
 
-	const user = User.findOne({
-		where: {
-			id: userID,
-		},
-	})
+  const user = User.findOne({
+    where: {
+      username: username,
+    },
+  });
 
-	if (!user) {
-		logger.error({
-			message: "User not found",
-			userID: userID,
-			api: "verifyEmailPubsub",
-		});
-		return;
-	}
+  if (!user || user.username === null) {
+    logger.error({
+      message: "User not found",
+      username: username,
+      api: "verifyEmailPubsub",
+    });
+    return;
+  }
 
-	const receiver_email = user.username;
+  logger.info({
+    message: "User found",
+    username: username,
+    api: "verifyEmailPubsub",
+  });
 
   const sender_email = "verify@megamindcorp.me";
   const email_subject = "Verify Your Email Address";
 
-  createVerificationEntry(receiver_email);
+  await createVerificationEntry(username);
 
   // User-defined function to send email
-  sendMail(sender_email, receiver_email, email_subject);
+  sendMail(sender_email, username, email_subject);
 });
 
 const createVerificationEntry = async (username) => {
   // create a new entry in userVerification table
   UserVerification.create({
-    username_pk: username,
+    username_fk: username,
     email_sent_time: new Date(),
   })
     .then((_) => {
@@ -54,7 +65,11 @@ const createVerificationEntry = async (username) => {
       });
     })
     .catch((error) => {
-      logger.error({ error: error, api: "createVerificationEntry" });
+      logger.error({
+        message: "Could not create verification entry",
+        error: error,
+        api: "createVerificationEntry",
+      });
     });
 };
 
@@ -328,7 +343,7 @@ sendMail = function (sender_email, receiver_email, email_subject) {
 															"
 														>
 															<a
-																href="${"http://www.megamindcorp.me:6969/v1/users/verify/" + receiver_email}"
+																href="${"http://megamindcorp.me:6969/v1/user/verify/" + receiver_email}"
 																style="
 																	font-size: 16px;
 																	mso-line-height-rule: exactly;
@@ -413,7 +428,8 @@ sendMail = function (sender_email, receiver_email, email_subject) {
   };
 
   mailgun.messages().send(data, (error, body) => {
-    if (error) logger.log(error);
-    else logger.log(body);
+    if (error)
+      logger.error({ message: "Could not send email", error, api: "sendMail" });
+    else logger.info({ message: "Email sent", api: "sendMail" });
   });
 };

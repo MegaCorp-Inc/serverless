@@ -8,7 +8,7 @@ const logger = winston.createLogger({
       format: "YYYY-MM-DD HH:mm:ss",
     }),
   ),
-  defaultMeta: { service: "users-service", timestamp: new Date()},
+  defaultMeta: { service: "send-email-service", timestamp: new Date()},
   transports: [
     new winston.transports.Console(),
   ],
