@@ -42,27 +42,25 @@ functions.cloudEvent("verifyEmailPubsub", async (cloudEvent) => {
     api: "verifyEmailPubsub",
   });
 
-  const sender_email = "verify@megamindcorp.me";
-  const email_subject = "Verify Your Email Address";
-
-  await createVerificationEntry(username);
-
-  // User-defined function to send email
-  sendMail(sender_email, username, email_subject);
+  createVerificationEntry(username);
 });
 
-const createVerificationEntry = async (username) => {
+const createVerificationEntry = async (
+  username,
+) => {
   // create a new entry in userVerification table
   UserVerification.create({
     username_fk: username,
     email_sent_time: new Date(),
   })
-    .then((_) => {
+    .then((entry) => {
       logger.info({
         message: "Verification entry created successfully",
-        username: username,
+        entry: entry,
         api: "createVerificationEntry",
       });
+      // User-defined function to send email
+      sendMail(username, entry.token);
     })
     .catch((error) => {
       logger.error({
@@ -73,7 +71,10 @@ const createVerificationEntry = async (username) => {
     });
 };
 
-sendMail = function (sender_email, receiver_email, email_subject) {
+sendMail = function (receiver_email, token) {
+  const sender_email = "verify@megamindcorp.me";
+  const email_subject = "Verify Your Email Address";
+
   const data = {
     from: sender_email,
     to: receiver_email,
@@ -343,7 +344,7 @@ sendMail = function (sender_email, receiver_email, email_subject) {
 															"
 														>
 															<a
-																href="${"http://megamindcorp.me:6969/v1/user/verify/" + receiver_email}"
+																href="${"http://megamindcorp.me:6969/v1/user/verify/" + token}"
 																style="
 																	font-size: 16px;
 																	mso-line-height-rule: exactly;
