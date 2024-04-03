@@ -344,7 +344,7 @@ sendMail = function (receiver_email, token) {
 															"
 														>
 															<a
-																href="${"http://megamindcorp.me:6969/v1/user/verify/" + token}"
+																href="${env.process.VERIFY_URL + token}"
 																style="
 																	font-size: 16px;
 																	mso-line-height-rule: exactly;
