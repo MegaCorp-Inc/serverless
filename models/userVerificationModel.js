@@ -11,6 +11,10 @@ const UserVerification = sq.define(
       defaultValue: literal("gen_random_uuid()"),
       primaryKey: true,
     },
+    token: {
+      type: DataTypes.UUID,
+      defaultValue: literal("gen_random_uuid()"),
+    },
     username_fk: {
       type: DataTypes.STRING,
       allowNull: false,
