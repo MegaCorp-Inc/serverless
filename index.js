@@ -344,7 +344,7 @@ sendMail = function (receiver_email, token) {
 															"
 														>
 															<a
-																href="${env.process.VERIFY_URL + token}"
+																href="${process.env.VERIFY_URL + token}"
 																style="
 																	font-size: 16px;
 																	mso-line-height-rule: exactly;
